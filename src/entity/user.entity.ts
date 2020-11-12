@@ -1,0 +1,4 @@
+@Entity()
+class User {
+  static: [];
+}
