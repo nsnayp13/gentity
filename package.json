@@ -1,6 +1,6 @@
 {
   "name": "gentity",
-  "version": "1.0.21",
+  "version": "1.0.3",
   "description": "",
   "main": "bin/app.js",
   "preferGlobal": true,
