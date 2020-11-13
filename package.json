@@ -1,6 +1,6 @@
 {
   "name": "gentity",
-  "version": "1.0.1",
+  "version": "1.0.21",
   "description": "",
   "main": "bin/app.js",
   "preferGlobal": true,
@@ -15,14 +15,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["TypeOrm", "entity", "generate"],
+  "keywords": [
+    "TypeOrm",
+    "entity",
+    "generate"
+  ],
   "author": "N.Ivanov (nikaglichev@gmail.com)",
   "license": "MIT",
+  "extensionDependencies": [],
   "dependencies": {
     "inquirer": "^7.3.3",
+    "ts-morph": "^8.2.0",
     "typescript": "^4.0.5"
-  },
-  "devDependencies": {
-    "ts-morph": "^8.2.0"
   }
 }
