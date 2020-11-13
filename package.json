@@ -8,6 +8,13 @@
   "bin": {
     "gentity": "bin/gentity.js"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/nsnayp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nsnayp13/gentity"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
