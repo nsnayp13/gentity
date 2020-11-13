@@ -1,15 +1,12 @@
 {
   "name": "gentity",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "",
   "main": "bin/app.js",
   "preferGlobal": true,
   "type": "module",
   "bin": {
     "gentity": "bin/gentity.js"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/nsnayp"
   },
   "repository": {
     "type": "git",
