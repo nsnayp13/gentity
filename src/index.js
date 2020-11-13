@@ -49,12 +49,24 @@ export class AstMorph {
   }
 
   comImport(name, path = 'typeorm'){
+    if(!this.source.getImportDeclaration(path)&&path!=='typeorm'){
+      this.source.addImportDeclaration(
+        {
+          defaultImport:name,
+          moduleSpecifier: path
+        });
+    }else if(!this.source.getImportDeclaration(path)&&path==='typeorm'){
+      this.source.addImportDeclaration(
+        {
+          namedImports:[name],
+          moduleSpecifier: path
+        });
+    }else{
 
-    if(!this.source.getImportDeclaration(name)){
-      this.source.addImportDeclaration({
-        defaultImport: name,
-        moduleSpecifier: path
-      });
+      if(this.source.getImportDeclaration(path).getNamedImports().filter(node => node.getName() === name  ).length === 0  ) {
+        this.source.getImportDeclaration(path).addNamedImport(name)
+      }
+
     }
 
   }
@@ -603,7 +615,8 @@ export class Cli {
       this.answers.fields.map( (field,i)=> { 
         
         if(field.entity){
-          field.entityPath = this.entities.find(item=>item.className === field.entity).filepath
+          field.entityPath = this.entities.find(item=>item.className === field.entity).filepath.replace(/\.[^.ts]$/, "")
+
         }
         
         ast.addProperty(field)
