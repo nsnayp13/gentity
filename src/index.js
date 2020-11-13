@@ -10,7 +10,7 @@ import path, { resolve } from 'path';
 import { fieldQs, entityQs, needFieldQs } from './questions/field.js';
 import ts from 'typescript';
 import pkg from 'ts-morph';
-const { Project, FunctionDeclaration } = pkg;
+const { Project, NewLineKind, IndentationText } = pkg;
 
 // const Project = require('ts-morph').Project;
 
@@ -25,7 +25,13 @@ export class AstMorph {
   constructor(className, filePath){
     this.className = className;
     this.filePath = filePath;
-    this.project = new Project();
+    this.project = new Project({
+      manipulationSettings:{
+        newLineKind: NewLineKind.CarriageReturnLineFeed,
+        indentationText: IndentationText.FourSpaces,
+        
+      }
+    });
    
 
     if(!filePath){
@@ -42,7 +48,14 @@ export class AstMorph {
 
   }
 
-  comImport(){
+  comImport(name, path = 'typeorm'){
+
+    if(!this.source.getImportDeclaration(name)){
+      this.source.addImportDeclaration({
+        defaultImport: name,
+        moduleSpecifier: path
+      });
+    }
 
   }
 
@@ -50,6 +63,9 @@ export class AstMorph {
 
     let nodeClass;
     if(this.isNew){
+
+      this.comImport('Entity');
+
       nodeClass = this.source.addClass({
         decorators:[{name:"Entity", arguments:[]}],
         name:this.className
@@ -72,54 +88,88 @@ export class AstMorph {
 
     switch (field.fieldType) {
       case 'OneToOne':
+        this.comImport('OneToOne');
+        this.comImport('JoinColumn');
+
         return [
           {
             name:"OneToOne",
             arguments:  [ "() => "+field.entity ]
           },
           {
-            name:"JoinColumn"
+            name:"JoinColumn",
+            arguments:[]
           }
         ]
       case 'ManyToOne':
+        this.comImport('ManyToOne');
+
           return [{
             name:"ManyToOne",
             arguments:["type => "+field.entity, field.entity.toLowerCase()+" => "+field.entity.toLowerCase()+"."+field.fieldNameRelation]
           }]
       case 'OneToMany':
+        this.comImport('OneToMany');
         return [{
           name:"OneToMany",
-          arguments:  [ "() => "+field.entity, field.entity.toLowerCase()+" => "+field.entity.toLowerCase()+"."+field.fieldNameRelation]
+          arguments:  [ "() => "+field.entity, field.entity.toLowerCase()+" => "+field.entity.toLowerCase()+"."+this.className.toLowerCase()]
         }]
        case 'ManyToMany':
+        this.comImport('ManyToMany');
+        this.comImport('JoinTable');
         return [
           {
             name:"ManyToMany",
             arguments:  [ "() => "+field.entity ]
           },
           {
-            name:"JoinTable"
+            name:"JoinTable",
+            arguments:[]
           }
         ]
       default:
+        this.comImport('Column');
+        return[{
+          name:'Column',
+          arguments:[]
+        }]
         break;
     }
 
   }
 
+  getTypeByField(field){
+    if(["OneToOne","ManyToOne"].includes(field.fieldType)){
+      return field.entity
+    }else if(["OneToMany","ManyToMany"].includes(field.fieldType)){
+      return field.entity+'[]';
+    }else{
+      return field.fieldType
+    }
+  }
+
 
   addProperty(field){
+
+    if(field.entity){
+      this.comImport(field.entity, field.entityPath);
+    }
     this.nodeClass.addProperty({
       decorators:this.getDecoratorByField(field),
       name:  field.fieldName,
-      type: "Type"  + ((["ManyToMany","OneToMany"].includes(field.fieldType))?'[]':''),
-    });
+      type: this.getTypeByField(field),
+      leadingTrivia: writer => writer.newLine(),
+    })
   }
+
 
 
   save(){
     this.project.save();
   }
+
+
+
 
 }
 
@@ -506,7 +556,7 @@ export class Cli {
     let answers = {};
 
     switch (answer.fieldType) {
-      case 'ManyToOne' || 'OneToMany':
+      case 'ManyToOne':
         answers = await inquirer.prompt({
           type: 'input',
           name: 'fieldNameRelation',
@@ -546,13 +596,23 @@ export class Cli {
       }
     } else {
       /** There we get all answers */
-      console.log(this.answers);
+      
 
       const ast = new AstMorph(this.answers.name);
       ast.createOrModifyClass();
-      this.answers.fields.map(field=> ast.addProperty(field))
-      ast.save();
+      this.answers.fields.map( (field,i)=> { 
+        
+        if(field.entity){
+          field.entityPath = this.entities.find(item=>item.className === field.entity).filepath
+        }
+        
+        ast.addProperty(field)
+        this.answers.fields[i] = field;
 
+
+      })
+      ast.save();
+      console.log(this.answers);
 
       // const ast = new Ast('', true, this.answers.name);
       // const nodes = ast.createBody(this.answers, this.entities);
