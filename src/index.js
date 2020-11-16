@@ -1,7 +1,3 @@
-// const inquirer = require('inquirer');
-// const path = require('path');
-// const fs = require('fs');
-// const ts = require('typescript');
 import inquirer from 'inquirer';
 import fs from 'fs';
 
@@ -613,15 +609,43 @@ export class Cli {
       const ast = new AstMorph(this.answers.name);
       ast.createOrModifyClass();
       this.answers.fields.map( (field,i)=> { 
-        
         if(field.entity){
           field.entityPath = this.entities.find(item=>item.className === field.entity).filepath.replace(/\.[^.ts]$/, "")
+
+
+          const relative = new AstMorph(field.entity, this.entities.find(item=>item.className === field.entity).filepath);
+          relative.createOrModifyClass()
+
+          if(field.fieldType=='ManyToMany' || field.fieldType=='OneToOne'){
+            relative.addProperty({
+              fieldName: this.answers.name,
+              entity: this.answers.name,
+              entityPath: './entity.' + this.answers.name + '.ts',
+              fieldType: field.fieldType
+            })
+          }else if(field.fieldType=='ManyToOne'){
+            relative.addProperty({
+              fieldName: this.answers.name,
+              entity: this.answers.name,
+              entityPath: './entity.' + this.answers.name + '.ts',
+              fieldType: 'OneToMany'
+            })
+          }else if(field.fieldType=='OneToMany'){
+
+            relative.addProperty({
+              fieldName: this.answers.name,
+              entity: this.answers.name,
+              entityPath: './entity.' + this.answers.name + '.ts',
+              fieldType: 'ManyToOne',
+              fieldNameRelation: this.answers.name.toLowerCase()
+            })
+          }
+          relative.save();
 
         }
         
         ast.addProperty(field)
         this.answers.fields[i] = field;
-
 
       })
       ast.save();
